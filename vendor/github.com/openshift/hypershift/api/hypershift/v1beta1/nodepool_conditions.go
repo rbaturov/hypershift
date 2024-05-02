@@ -18,6 +18,10 @@ const (
 	// NodePoolValidTuningConfigConditionType signals if the content within nodePool.spec.tuningConfig is valid.
 	// A failure here is unlikely to resolve without the changing user input.
 	NodePoolValidTuningConfigConditionType = "ValidTuningConfig"
+	// NodePoolPerformanceProfileAppliedSuccessfullyType signal if the performance profile has been applied successfully.
+	// A false condition may occur in two scenarios: either the performance profile tuning has not been completed yet, or a failure has occurred.
+	// The reason and message will provide details specific to the scenario.
+	NodePoolPerformanceProfileAppliedSuccessfullyType = "PerformanceProfileAppliedSuccessfully"
 
 	// NodePoolUpdateManagementEnabledConditionType signals if the nodePool.spec.management input is valid.
 	// A failure here is unlikely to resolve without the changing user input.
