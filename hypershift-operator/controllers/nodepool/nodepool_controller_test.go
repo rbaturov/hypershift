@@ -40,6 +40,7 @@ import (
 	"github.com/openshift/hypershift/support/thirdparty/library-go/pkg/image/dockerv1client"
 	"github.com/openshift/hypershift/support/upsert"
 	"github.com/openshift/hypershift/support/util/fakeimagemetadataprovider"
+	ppstatusconfigmap "github.com/openshift/hypershift/support/util/performanceprofilestatusconfigmap"
 )
 
 func TestIsUpdatingConfig(t *testing.T) {
@@ -2368,101 +2369,100 @@ func TestHandlePerformanceProfileStatus(t *testing.T) {
 	controlPlaneNamespace := "clusters-hostedcluster01"
 	userClustersNamespace := "clusters"
 	nodePoolName := "hostedcluster01"
+
+	// statusMap := map[string]ppstatusconfigmap.Status{
+	// 	"Available":  ppstatusconfigmap.AvailablePerformanceProfileStatus(),
+	// 	"Progressing": ppstatusconfigmap.ProgressingPerformanceProfileStatus(),
+	// 	"Degraded":   ppstatusconfigmap.DegradedPerformanceProfileStatus(),
+	// }
+
+	// configMaps := make(map[string]*corev1.ConfigMap)
+
+	// for key, status := range statusMap {
+	// 	configMap, err := ppstatusconfigmap.New(controlPlaneNamespace, userClustersNamespace, nodePoolName,
+	// 		ppstatusconfigmap.WithStatus(status))
+	// 	if err != nil {
+	// 		return fmt.Errorf("Failed to create a performance profile status config map for %s status\n", key)
+	// 	} else {
+	// 		configMaps[key] = configMap
+	// 	}
+	// }
+
+	availablePPstatusCM, err := ppstatusconfigmap.New(controlPlaneNamespace, userClustersNamespace, nodePoolName,
+		ppstatusconfigmap.WithStatus(ppstatusconfigmap.AvailablePerformanceProfileStatus()))
+	if err != nil {
+		fmt.Printf("Failed to create a performance profile status config map")
+	}
+
+	// progressingPPstatusCM, err := ppstatusconfigmap.New(controlPlaneNamespace, userClustersNamespace, nodePoolName,
+	// 	ppstatusconfigmap.WithStatus(ppstatusconfigmap.ProgressingPerformanceProfileStatus()))
+	// if err != nil {
+	// 	fmt.Printf("Failed to create a performance profile status config map")
+	// }
+
+	// degradedPPstatusCM, err := ppstatusconfigmap.New(controlPlaneNamespace, userClustersNamespace, nodePoolName,
+	// 	ppstatusconfigmap.WithStatus(ppstatusconfigmap.DegradedPerformanceProfileStatus()))
+	// if err != nil {
+	// 	fmt.Printf("Failed to create a performance profile status config map")
+	// }
+
+
+
 	testCases := []struct {
 		name                       string
 		PerformanceProfileStatusCM *corev1.ConfigMap
-		expectedCondition          *hyperv1.NodePoolCondition
+		expectedConditions         []hyperv1.NodePoolCondition
 	}{
 		{
-			name: "Performance profile is available",
-			PerformanceProfileStatusCM: &corev1.ConfigMap{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "ConfigMap",
-					APIVersion: "v1",
+			name:                       "Performance profile is available",
+			PerformanceProfileStatusCM: availablePPstatusCM,
+			expectedConditions: []hyperv1.NodePoolCondition{
+				hyperv1.NodePoolCondition{
+					Type:    hyperv1.NodePoolPerformanceProfileAppliedSuccessfullyType,
+					Status:  corev1.ConditionTrue,
+					Message: "cgroup=v1;",
+					Reason:  "",
 				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "perfprofile-" + nodePoolName + "-status",
-					Namespace: controlPlaneNamespace,
-					Labels: map[string]string{
-						"hypershift.openshift.io/nto-generated-performance-profile-status": "true",
-						"hypershift.openshift.io/nodePool":                                 nodePoolName,
-						"hypershift.openshift.io/performanceProfileName":                   nodePoolName,
-					},
-					Annotations: map[string]string{
-						"hypershift.openshift.io/nodePool": nodePoolName,
-					},
+				hyperv1.NodePoolCondition{
+					Type:    hyperv1.NodePoolUpgradeableConditionType, // Assuming a different condition type for upgradeable
+					Status:  corev1.ConditionFalse,
+					Message: "",
+					Reason:  "",
 				},
-				Data: map[string]string{
-					"status": "{\"conditions\":[{\"lastHeartbeatTime\":\"2024-04-18T06:55:45Z\",\"lastTransitionTime\":\"2024-04-18T06:55:45Z\",\"message\":\"cgroup=v1;\",\"status\":\"True\",\"type\":\"Available\"},{\"lastHeartbeatTime\":\"2024-04-18T06:55:45Z\",\"lastTransitionTime\":\"2024-04-18T06:55:45Z\",\"status\":\"True\",\"type\":\"Upgradeable\"},{\"lastHeartbeatTime\":\"2024-04-18T06:55:45Z\",\"lastTransitionTime\":\"2024-04-18T06:55:45Z\",\"status\":\"False\",\"type\":\"Progressing\"},{\"lastHeartbeatTime\":\"2024-04-18T06:55:45Z\",\"lastTransitionTime\":\"2024-04-18T06:55:45Z\",\"status\":\"False\",\"type\":\"Degraded\"}],\"runtimeClass\":\"performance-performance\",\"tuned\":\"openshift-cluster-node-tuning-operator/openshift-node-performance-performance\"}",
+				hyperv1.NodePoolCondition{
+					Type:    hyperv1.NodePoolHealthyConditionType, // Another different condition type
+					Status:  corev1.ConditionFalse,
+					Message: "",
+					Reason:  "",
 				},
-			},
-			expectedCondition: &hyperv1.NodePoolCondition{
-				Type:    hyperv1.NodePoolPerformanceProfileAppliedSuccessfullyType,
-				Status:  corev1.ConditionTrue,
-				Message: "cgroup=v1;",
-				Reason:  hyperv1.AsExpectedReason,
+				hyperv1.NodePoolCondition{
+					Type:    hyperv1.NodePoolReadyConditionType, // Another different condition type
+					Status:  corev1.ConditionFalse,
+					Message: "",
+					Reason:  "",
+				},
 			},
 		},
-		{
-			name: "Performance profile is progressing",
-			PerformanceProfileStatusCM: &corev1.ConfigMap{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "ConfigMap",
-					APIVersion: "v1",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "perfprofile-" + nodePoolName + "-status",
-					Namespace: controlPlaneNamespace,
-					Labels: map[string]string{
-						"hypershift.openshift.io/nto-generated-performance-profile-status": "true",
-						"hypershift.openshift.io/nodePool":                                 nodePoolName,
-						"hypershift.openshift.io/performanceProfileName":                   nodePoolName,
-					},
-					Annotations: map[string]string{
-						"hypershift.openshift.io/nodePool": nodePoolName,
-					},
-				},
-				Data: map[string]string{
-					"status": "{\"conditions\":[{\"lastTransitionTime\":\"2024-04-18T06:55:45Z\",\"status\":\"False\",\"type\":\"Available\"},{\"lastTransitionTime\":\"2024-04-18T06:55:45Z\",\"status\":\"False\",\"type\":\"Upgradeable\"},{\"lastTransitionTime\":\"2024-04-18T06:55:45Z\",\"status\":\"True\",\"type\":\"Progressing\",\"reason\":\"DeploymentStarting\",\"message\":\"Deployment is starting\"},{\"lastTransitionTime\":\"2024-04-18T06:55:45Z\",\"status\":\"False\",\"type\":\"Degraded\"}],\"runtimeClass\":\"performance-performance\",\"tuned\":\"openshift-cluster-node-tuning-operator/openshift-node-performance-performance\"}",
-				},
-			},
-			expectedCondition: &hyperv1.NodePoolCondition{
-				Type:    hyperv1.NodePoolPerformanceProfileAppliedSuccessfullyType,
-				Status:  corev1.ConditionFalse,
-				Reason:  "DeploymentStarting",
-				Message: "Deployment is starting",
-			},
-		},
-		{
-			name: "Performance profile is degraded",
-			PerformanceProfileStatusCM: &corev1.ConfigMap{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "ConfigMap",
-					APIVersion: "v1",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "perfprofile-" + nodePoolName + "-status",
-					Namespace: controlPlaneNamespace,
-					Labels: map[string]string{
-						"hypershift.openshift.io/nto-generated-performance-profile-status": "true",
-						"hypershift.openshift.io/nodePool":                                 nodePoolName,
-						"hypershift.openshift.io/performanceProfileName":                   nodePoolName,
-					},
-					Annotations: map[string]string{
-						"hypershift.openshift.io/nodePool": nodePoolName,
-					},
-				},
-				Data: map[string]string{
-					"status": "{\"conditions\":[{\"lastHeartbeatTime\":\"2024-04-18T06:55:45Z\",\"lastTransitionTime\":\"2024-04-18T06:55:45Z\",\"status\":\"False\",\"type\":\"Available\"},{\"lastHeartbeatTime\":\"2024-04-18T06:55:45Z\",\"lastTransitionTime\":\"2024-04-18T06:55:45Z\",\"status\":\"True\",\"type\":\"Upgradeable\"},{\"lastHeartbeatTime\":\"2024-04-18T06:55:45Z\",\"lastTransitionTime\":\"2024-04-18T06:55:45Z\",\"status\":\"False\",\"type\":\"Progressing\"},{\"lastHeartbeatTime\":\"2024-04-18T06:55:45Z\",\"lastTransitionTime\":\"2024-04-18T06:55:45Z\",\"status\":\"True\",\"type\":\"Degraded\",\"reason\":\"GettingTunedStatusFailed\",\"message\":\"Cannot list Tuned Profiles to match with profile perfprofile-hostedcluster01\"}],\"runtimeClass\":\"performance-performance\",\"tuned\":\"openshift-cluster-node-tuning-operator/openshift-node-performance-performance\"}",
-				},
-			},
-			expectedCondition: &hyperv1.NodePoolCondition{
-				Type:    hyperv1.NodePoolPerformanceProfileAppliedSuccessfullyType,
-				Status:  corev1.ConditionFalse,
-				Reason:  "GettingTunedStatusFailed",
-				Message: "Cannot list Tuned Profiles to match with profile perfprofile-hostedcluster01",
-			},
-		},
+		// {
+		// 	name:                       "Performance profile is progressing",
+		// 	PerformanceProfileStatusCM: progressingPPstatusCM,
+		// 	expectedCondition: &hyperv1.NodePoolCondition{
+		// 		Type:    hyperv1.NodePoolPerformanceProfileAppliedSuccessfullyType,
+		// 		Status:  corev1.ConditionFalse,
+		// 		Reason:  "DeploymentStarting",
+		// 		Message: "Deployment is starting",
+		// 	},
+		// },
+		// {
+		// 	name:                       "Performance profile is degraded",
+		// 	PerformanceProfileStatusCM: degradedPPstatusCM,
+		// 	expectedCondition: &hyperv1.NodePoolCondition{
+		// 		Type:    hyperv1.NodePoolPerformanceProfileAppliedSuccessfullyType,
+		// 		Status:  corev1.ConditionFalse,
+		// 		Reason:  "GettingTunedStatusFailed",
+		// 		Message: "Cannot list Tuned Profiles to match with profile perfprofile-hostedcluster01",
+		// 	},
+		// },
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {

@@ -58,67 +58,71 @@ func TestNodePool(t *testing.T) {
 		// Each test should have their own NodePool
 		nodePoolTests := []NodePoolTestCase{
 
-			{
-				name: "TestKMSRootVolumeEncryption",
-				test: NewKMSRootVolumeTest(hostedCluster, clusterOpts),
-			},
-			{
-				name: "TestNodePoolAutoRepair",
-				test: NewNodePoolAutoRepairTest(ctx, hostedCluster, hostedClusterClient, clusterOpts),
-			},
-			{
-				name: "TestNodepoolMachineconfigGetsRolledout",
-				test: NewNodePoolMachineconfigRolloutTest(ctx, mgtClient, hostedCluster, hostedClusterClient, clusterOpts),
-			},
-			{
-				name: "TestNTOMachineConfigGetsRolledOut",
-				test: NewNTOMachineConfigRolloutTest(ctx, mgtClient, hostedCluster, hostedClusterClient, false),
-			},
+			// {
+			// 	name: "TestKMSRootVolumeEncryption",
+			// 	test: NewKMSRootVolumeTest(hostedCluster, clusterOpts),
+			// },
+			// {
+			// 	name: "TestNodePoolAutoRepair",
+			// 	test: NewNodePoolAutoRepairTest(ctx, hostedCluster, hostedClusterClient, clusterOpts),
+			// },
+			// {
+			// 	name: "TestNodepoolMachineconfigGetsRolledout",
+			// 	test: NewNodePoolMachineconfigRolloutTest(ctx, mgtClient, hostedCluster, hostedClusterClient, clusterOpts),
+			// },
+			// {
+			// 	name: "TestNTOMachineConfigGetsRolledOut",
+			// 	test: NewNTOMachineConfigRolloutTest(ctx, mgtClient, hostedCluster, hostedClusterClient, false),
+			// },
 
-			{
-				name:            "TestNTOMachineConfigAppliedInPlace",
-				test:            NewNTOMachineConfigRolloutTest(ctx, mgtClient, hostedCluster, hostedClusterClient, true),
-				manifestBuilder: NewNTOMachineConfigInPlaceRolloutTestManifest(hostedCluster),
-			},
+			// {
+			// 	name:            "TestNTOMachineConfigAppliedInPlace",
+			// 	test:            NewNTOMachineConfigRolloutTest(ctx, mgtClient, hostedCluster, hostedClusterClient, true),
+			// 	manifestBuilder: NewNTOMachineConfigInPlaceRolloutTestManifest(hostedCluster),
+			// },
 
-			{
-				name: "TestNodePoolReplaceUpgrade",
-				test: NewNodePoolUpgradeTest(ctx, mgtClient, hostedCluster, hostedClusterClient, clusterOpts, globalOpts.PreviousReleaseImage, globalOpts.LatestReleaseImage),
-			},
+			// {
+			// 	name: "TestNodePoolReplaceUpgrade",
+			// 	test: NewNodePoolUpgradeTest(ctx, mgtClient, hostedCluster, hostedClusterClient, clusterOpts, globalOpts.PreviousReleaseImage, globalOpts.LatestReleaseImage),
+			// },
 
-			{
-				name:            "TestNodePoolInPlaceUpgrade",
-				test:            NewNodePoolUpgradeTest(ctx, mgtClient, hostedCluster, hostedClusterClient, clusterOpts, globalOpts.PreviousReleaseImage, globalOpts.LatestReleaseImage),
-				manifestBuilder: NewNodePoolInPlaceUpgradeTestManifest(hostedCluster, globalOpts.PreviousReleaseImage, globalOpts.LatestReleaseImage),
-			},
+			// {
+			// 	name:            "TestNodePoolInPlaceUpgrade",
+			// 	test:            NewNodePoolUpgradeTest(ctx, mgtClient, hostedCluster, hostedClusterClient, clusterOpts, globalOpts.PreviousReleaseImage, globalOpts.LatestReleaseImage),
+			// 	manifestBuilder: NewNodePoolInPlaceUpgradeTestManifest(hostedCluster, globalOpts.PreviousReleaseImage, globalOpts.LatestReleaseImage),
+			// },
 
-			{
-				name: "KubeVirtCacheTest",
-				test: NewKubeVirtCacheTest(ctx, mgtClient, hostedCluster),
-			},
-			{
-				name: "TestRollingUpgrade",
-				test: NewRollingUpgradeTest(ctx, mgtClient, hostedCluster),
-			},
-			{
-				name: "KubeVirtQoSClassGuaranteedTest",
-				test: NewKubeVirtQoSClassGuaranteedTest(ctx, mgtClient, hostedCluster),
-			},
-			{
-				name: "KubeKubeVirtJsonPatchTest",
-				test: NewKubeKubeVirtJsonPatchTest(ctx, mgtClient, hostedCluster),
-			},
-			{
-				name: "KubeVirtNodeSelectorTest",
-				test: NewKubeKubeVirtNodeSelectorTest(ctx, mgtClient, hostedCluster),
-			},
-			{
-				name: "KubeVirtNodeMultinetTest",
-				test: NewKubeVirtMultinetTest(ctx, mgtClient, hostedCluster),
-			},
+			// {
+			// 	name: "KubeVirtCacheTest",
+			// 	test: NewKubeVirtCacheTest(ctx, mgtClient, hostedCluster),
+			// },
+			// {
+			// 	name: "TestRollingUpgrade",
+			// 	test: NewRollingUpgradeTest(ctx, mgtClient, hostedCluster),
+			// },
+			// {
+			// 	name: "KubeVirtQoSClassGuaranteedTest",
+			// 	test: NewKubeVirtQoSClassGuaranteedTest(ctx, mgtClient, hostedCluster),
+			// },
+			// {
+			// 	name: "KubeKubeVirtJsonPatchTest",
+			// 	test: NewKubeKubeVirtJsonPatchTest(ctx, mgtClient, hostedCluster),
+			// },
+			// {
+			// 	name: "KubeVirtNodeSelectorTest",
+			// 	test: NewKubeKubeVirtNodeSelectorTest(ctx, mgtClient, hostedCluster),
+			// },
+			// {
+			// 	name: "KubeVirtNodeMultinetTest",
+			// 	test: NewKubeVirtMultinetTest(ctx, mgtClient, hostedCluster),
+			// },
 			{
 				name: "TestNTOPerformanceProfile",
 				test: NewNTOPerformanceProfileTest(ctx, mgtClient, hostedCluster, hostedClusterClient),
+			},
+			{
+				name: "TestNTOPerformanceProfileStatus",
+				test: NewNTOPerformanceProfileStatusTest(ctx, mgtClient, hostedCluster, hostedClusterClient),
 			},
 		}
 

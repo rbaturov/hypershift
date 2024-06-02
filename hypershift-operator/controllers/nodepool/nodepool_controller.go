@@ -71,6 +71,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/yaml"
 )
 
 const (
@@ -2910,14 +2911,20 @@ func (r *NodePoolReconciler) HandlePerformanceProfileStatus(ctx context.Context,
 	}
 
 	// ConfigMap found, process its status
-	condition, err := performanceProfileStatus(performanceProfileStatusConfigMap)
+	conditions, err := performanceProfileStatusConditions(performanceProfileStatusConfigMap)
 	if err != nil {
 		return err
 	}
 
-	// Calculate performance profile node pool condition
-	if err = calculatePerformanceProfileNodePoolCondition(nodePool, condition); err != nil {
-		return err
+	// Append performance profile conditions to node pool conditions
+	prefix := "performance.openshift.io"
+	for _, cond := range conditions {
+		SetStatusCondition(&nodePool.Status.Conditions, hyperv1.NodePoolCondition{
+			Type:               fmt.Sprintf("%s/%s",prefix,cond.Type),
+			Status:             cond.Status,
+			Reason:             cond.Reason,
+			Message:            cond.Message,
+			ObservedGeneration: nodePool.Generation})
 	}
 
 	return nil
@@ -2983,53 +2990,39 @@ func aggregateMachineMessages(msgs []string) string {
 	return builder.String()
 }
 
-func performanceProfileStatus(performanceProfileStatusConfigMap *corev1.ConfigMap) (*conditionsv1.Condition, error) {
+func performanceProfileStatusConditions(performanceProfileStatusConfigMap *corev1.ConfigMap) ([]conditionsv1.Condition, error) {
 	statusRaw, ok := performanceProfileStatusConfigMap.Data["status"]
 	if !ok {
-		return nil, fmt.Errorf("status not found in PerformanceProfileStatus ConfigMap")
+		return nil, fmt.Errorf("status not found in performance profile status configmap")
 	}
 	status := &performanceprofilev2.PerformanceProfileStatus{}
-	if err := json.Unmarshal([]byte(statusRaw), status); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal PerformanceProfileStatus ConfigMap")
-	}
-	if isAvailabe := conditionsv1.IsStatusConditionTrue(status.Conditions, conditionsv1.ConditionAvailable); isAvailabe {
-		return conditionsv1.FindStatusCondition(status.Conditions, conditionsv1.ConditionAvailable), nil
-	} else if isProgressing := conditionsv1.IsStatusConditionTrue(status.Conditions, conditionsv1.ConditionProgressing); isProgressing {
-		return conditionsv1.FindStatusCondition(status.Conditions, conditionsv1.ConditionProgressing), nil
-	} else if isDegraded := conditionsv1.IsStatusConditionTrue(status.Conditions, conditionsv1.ConditionDegraded); isDegraded {
-		return conditionsv1.FindStatusCondition(status.Conditions, conditionsv1.ConditionDegraded), nil
-	}
 
-	//This should never happed
-	return nil, fmt.Errorf("failed to find relevant condition status")
+	StatusFromYAML([]byte(statusRaw), status)
+
+	return status.Conditions, nil
 }
 
-func calculatePerformanceProfileNodePoolCondition(nodePool *hyperv1.NodePool, cond *conditionsv1.Condition) error {
-	switch cond.Type {
-	case conditionsv1.ConditionAvailable:
-		SetStatusCondition(&nodePool.Status.Conditions, hyperv1.NodePoolCondition{
-			Type:               hyperv1.NodePoolPerformanceProfileAppliedSuccessfullyType,
-			Status:             corev1.ConditionTrue,
-			Reason:             hyperv1.AsExpectedReason,
-			Message:            cond.Message,
-			ObservedGeneration: nodePool.Generation})
 
-	case conditionsv1.ConditionProgressing:
-		SetStatusCondition(&nodePool.Status.Conditions, hyperv1.NodePoolCondition{
-			Type:               hyperv1.NodePoolPerformanceProfileAppliedSuccessfullyType,
-			Status:             corev1.ConditionFalse,
-			Reason:             cond.Reason,
-			Message:            cond.Message,
-			ObservedGeneration: nodePool.Generation})
-	case conditionsv1.ConditionDegraded:
-		SetStatusCondition(&nodePool.Status.Conditions, hyperv1.NodePoolCondition{
-			Type:               hyperv1.NodePoolPerformanceProfileAppliedSuccessfullyType,
-			Status:             corev1.ConditionFalse,
-			Reason:             cond.Reason,
-			Message:            cond.Message,
-			ObservedGeneration: nodePool.Generation})
-	default:
-		return fmt.Errorf("performance profile status should be in one of these states: Available, Progressing or Degraded")
+func StatusToYAML(status *performanceprofilev2.PerformanceProfileStatus) ([]byte, error) {
+	jsonData, err := json.Marshal(status)
+	if err != nil {
+		return nil, err
+	}
+	yamlData, err := yaml.JSONToYAML(jsonData)
+	if err != nil {
+		return nil, err
+	}
+	return yamlData, nil
+}
+
+func StatusFromYAML(yamlData []byte, status *performanceprofilev2.PerformanceProfileStatus) error {
+	jsonData, err := yaml.YAMLToJSON(yamlData)
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal(jsonData, status)
+	if err != nil {
+		return err
 	}
 	return nil
 }
