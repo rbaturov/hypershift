@@ -174,6 +174,25 @@ const (
 	ClusterSizeTransitionPending = "ClusterSizeTransitionPending"
 	// ClusterSizeTransitionRequired exposes the next t-shirt size that the cluster will transition to.
 	ClusterSizeTransitionRequired = "ClusterSizeTransitionRequired"
+
+	// PerformanceProfileAvailable indicates that the tuning referenced in the performance profile was applied successfully by the node tuning operator and
+	// is available in the cluster.
+	PerformanceProfileAvailable ConditionType = "Available"
+
+	// PerformanceProfileAvailable indicates that the node tuning operator is actively making changes to the resources maintained
+	// by it is not yet available in the cluster.
+	PerformanceProfileProgressing ConditionType = "Progressing"
+
+	// PerformanceProfileDegraded indicates that the resources maintained by the node tuning operator are not functioning completely.
+	// An example of a degraded state would be if not all pods in a deployment were running.
+	// It may still be available, but it is degraded
+	PerformanceProfileDegraded ConditionType = "Degraded"
+
+	// PerformanceProfileUpgradeable indicates whether the resources maintained by the node tuning operator are in a state that is safe to upgrade.
+	// When `False`, the resources maintained by the operator should not be upgraded and the
+	// message field should contain a human readable description of what the administrator should do to
+	// allow the operator to successfully update the resources maintained by the operator.
+	PerformanceProfileUpgradeable ConditionType = "Upgradeable"
 )
 
 // Reasons.

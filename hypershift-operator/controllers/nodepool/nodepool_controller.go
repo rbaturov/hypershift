@@ -2904,8 +2904,12 @@ func (r *NodePoolReconciler) HandlePerformanceProfileStatus(ctx context.Context,
 			return fmt.Errorf("failed to get performance profile status configmap: %w", err)
 		}
 		// ConfigMap not found, remove the condition if it exists
-		if cond := FindStatusCondition(nodePool.Status.Conditions, hyperv1.NodePoolPerformanceProfileAppliedSuccessfullyType); cond != nil {
-			removeStatusCondition(&nodePool.Status.Conditions, hyperv1.NodePoolPerformanceProfileAppliedSuccessfullyType)
+		if cond := FindStatusCondition(nodePool.Status.Conditions, hyperv1.PerformanceProfileAvailable); cond != nil {
+			removeStatusCondition(&nodePool.Status.Conditions, hyperv1.PerformanceProfileAvailable)
+			removeStatusCondition(&nodePool.Status.Conditions, hyperv1.PerformanceProfileAvailable)
+			removeStatusCondition(&nodePool.Status.Conditions, hyperv1.PerformanceProfileAvailable)
+			removeStatusCondition(&nodePool.Status.Conditions, hyperv1.PerformanceProfileAvailable)
+
 		}
 		return nil
 	}
@@ -2920,7 +2924,7 @@ func (r *NodePoolReconciler) HandlePerformanceProfileStatus(ctx context.Context,
 	prefix := "performance.openshift.io"
 	for _, cond := range conditions {
 		SetStatusCondition(&nodePool.Status.Conditions, hyperv1.NodePoolCondition{
-			Type:               fmt.Sprintf("%s/%s",prefix,cond.Type),
+			Type:               fmt.Sprintf("%s/%s", prefix, cond.Type),
 			Status:             cond.Status,
 			Reason:             cond.Reason,
 			Message:            cond.Message,
@@ -3001,7 +3005,6 @@ func performanceProfileStatusConditions(performanceProfileStatusConfigMap *corev
 
 	return status.Conditions, nil
 }
-
 
 func StatusToYAML(status *performanceprofilev2.PerformanceProfileStatus) ([]byte, error) {
 	jsonData, err := json.Marshal(status)
